@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="headers">
+      <UniqueIdentifier>{ef9989a7-bec1-47bf-a88c-b255d63b3f91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utilities">
+      <UniqueIdentifier>{eecdf86e-b8b6-45a6-81db-86ef97ca3a13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{539c5d2c-01ae-4b6c-85dd-b5f5cc1a8b25}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Bitmapstuff.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="delete.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Render.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bitmapsaver.c">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="delete.ico">
+      <Filter>utilities</Filter>
+    </Image>
+    <Image Include="small.ico">
+      <Filter>utilities</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Render.cu">
+      <Filter>Render</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>
