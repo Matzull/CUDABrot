@@ -36,6 +36,9 @@
       <Filter>utilities</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Rendercpy.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="delete.ico">
@@ -44,10 +47,5 @@
     <Image Include="small.ico">
       <Filter>utilities</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="Render.cu">
-      <Filter>Render</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="bitmapsaver.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Rendercpy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bitmapstuff.h" />
@@ -25,9 +26,6 @@
   <ItemGroup>
     <Image Include="delete.ico" />
     <Image Include="small.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="Render.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FEFEBBE5-53BC-4EE3-B61E-3843DEEAD430}</ProjectGuid>

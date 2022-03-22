@@ -6,9 +6,16 @@
 #include <string.h>
 #include <tchar.h>
 #include "Render.h"
+#include <chrono>
+using namespace std::chrono;
 
 // Global variables
 void render_frame(HWND hWnd);
+void benchmark(HWND hWnd);
+
+Tbounds xbounds;
+Tbounds ybounds;
+int it = 10;//iterations to calculate
 // The main window class name.
 static TCHAR szWindowClass[] = _T("DesktopApp");
 
@@ -127,8 +134,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     //arrow-left (-x)
     //arrow-right (+x)
     //+ (zoom)
-    //0 (+it)
-    //1 (-it)
+    //0 (-it)
+    //1 (+it)
     //2 (save)
 
     PAINTSTRUCT ps;
@@ -196,6 +203,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             render_frame(hWnd);
             break;
 
+        case VK_NUMPAD3:
+            benchmark(hWnd);
+            break;
+
         default:
             break;
         }
@@ -206,11 +217,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     return 0;
 }
+void benchmark(HWND hWnd)
+{
+    xbounds.move(-0.25);
+    ybounds.move(-0.25);
+    xbounds.scale(2);
+    ybounds.scale(2);
+    int oldit = it;
+    it = 10000;
+    auto start = high_resolution_clock::now();
+    render_frame(hWnd);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    int dur = duration.count();
+    it = oldit;
+    xbounds.move(0.25);
+    ybounds.move(0.25);
+    xbounds.scale(0.5);
+    ybounds.scale(0.5);
+}
 
 void render_frame(HWND hWnd)
 {
     HDC hdc;
-    map = render();
+    map = render(xbounds, ybounds, it);
     hdc = GetDC(hWnd);
     paint(hdc, map);
 }
