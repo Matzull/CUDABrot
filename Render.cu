@@ -1,23 +1,46 @@
-#include "Render.h"
+#include "Renderc.h"
+#include "curand.h"
+int converges(Tpair coor, int it);
+COLORREF colormap(double n, int it);
+void mapper(const Tpair& norx, const Tpair& nory, const Tpair& maxx, const Tpair& maxy, Tpair& coor);
 
-__global__ void renderPixel(const Tpair& norx, const Tpair& nory, const Tpair& maxx, const Tpair& maxy, int it, Tcolor* d_img)
+__global__ void renderPixel(Tpair* norx, Tpair* nory, Tpair* maxx, Tpair* maxy, int it, COLORREF* d_img)
 {
 	double pixel = 0;
-	Tpair coor(0, 0);
-	int x = threadIdx.x;
-	int y = blockDim.x;
-	for (size_t i = 0; i < spp; i++)
+	Tpair coor;
+	coor.fill(0, 0);
+	int tid = threadIdx.x;
+	int bdim = blockDim.x;
+	int bid = blockIdx.x;
+	double sppx[4] = { 0.25, 0.75, 0.25, 0.75 };
+	double sppy[4] = { 0.25, 0.25, 0.75, 0.25 };
+
+	for (size_t i = 0; i < 4; i++)
 	{
-		coor.x = x;
-		coor.y = y;
-		coor.map(norx, nory, maxx, maxy);
+		coor.x = tid + sppx[i];
+		coor.y = bid + sppy[i];
+		mapper(*norx, *nory, *maxx, *maxy, coor);
 		pixel += converges(coor, it);
 	}
-	d_img->arr[tamx * y + x] = colormap(pixel, it);
+	d_img[blockDim.x * blockIdx.x + threadIdx.x] = colormap(pixel, it);
+}
+
+//__device__ void mapper(Tpair* norx, Tpair* nory, Tpair* maxx, Tpair* maxy, Tpair* coor)//Normalizes pair this with max value max to interval nor
+//{
+//	//double ot = (coor->x - maxx->x) / (maxx->y - maxx->x);
+//	coor->x = (((coor->x - maxx->x) * (norx->y - norx->x)) / (maxx->y - maxx->x)) + norx->x;
+//	coor->y = (((coor->y - maxy->x) * (nory->y - nory->x)) / (maxy->y - maxy->x)) + nory->x;
+//}
+
+__device__ void mapper(const Tpair& norx, const Tpair& nory, const Tpair& maxx, const Tpair& maxy, Tpair& coor)//Normalizes pair this with max value max to interval nor
+{
+	//double ot = (coor->x - maxx->x) / (maxx->y - maxx->x);
+	coor.x = (((coor.x - maxx.x) * (norx.y - norx.x)) / (maxx.y - maxx.x)) + norx.x;
+	coor.y = (((coor.y - maxy.x) * (nory.y - nory.x)) / (maxy.y - maxy.x)) + nory.x;
 }
 
 //main "mandelbrot collision detection"
-int converges(Tpair coor, int it)
+__device__ int converges(Tpair coor, int it)
 {
 	int ret = it;
 	double a = coor.x;
@@ -40,10 +63,12 @@ int converges(Tpair coor, int it)
 }
 
 //converts an integer value into a greyscale tone
-COLORREF colormap(double n, int it)
+__device__ COLORREF colormap(double n, int it)
 {
-	double grey_base = 255 * (n / it) * (1.0 / spp);
-	return RGB(grey_base, grey_base, grey_base);
+	double nor = n * 0.25 / it;
+	double grey_base = 255 * nor * nor;
+	grey_base = (n * 0.25 == it) ? 0 : grey_base;
+	return RGB(grey_base / nor, grey_base, grey_base);
 }
 
 //Writes to file specified in ofstream (mildly optimized)
@@ -54,8 +79,8 @@ void saveimage(LPCSTR path, HBITMAP map)//only works with unidimensional color s
 }
 
 //generates a random double in [0, 1)
-inline double rand_num() {//esto es relento
-	return 0;
+__device__ double rand_num() {//esto es relento
+	return rand() / (RAND_MAX + 1.0);
 }
 
 void paint(HDC device, HBITMAP map)
@@ -71,20 +96,51 @@ void paint(HDC device, HBITMAP map)
 HBITMAP render(Tbounds xbounds, Tbounds ybounds, int it)
 {
 	srand(time(0));
-	Tcolor* img;
-	Tcolor* d_img;
+	//Tcolor img;
 	size_t bytes = (tamx * tamy) * sizeof(COLORREF);
-	double pixel;
-	cudaMalloc(&d_img, bytes);
-	Tpair coor(0, 0);// x y coordinates of the pixel
-	Tpair norx(xbounds._min, xbounds._max);//normalitation range
-	Tpair nory(ybounds._min, ybounds._max);
-	Tpair maxx(0, tamx);//max posible values of x
-	Tpair maxy(0, tamy);
-	dim3 threadspb(1024, 0, 0);
-	dim3 blockspf(1024, 0, 0);
-	renderPixel <<<blockspf, threadspb >>> (norx, nory, maxx, maxy, it, d_img);
+	COLORREF* img;
+	COLORREF* d_img;	
+	img = (COLORREF*)malloc(bytes);
+	cudaMalloc((void**)&d_img, bytes);
+
+	Tpair norx;
+	norx.fill(xbounds._min, xbounds._max);
+	Tpair* d_norx;//normalitation range
+	cudaMalloc((void**)&d_norx, sizeof(Tpair));
+	cudaMemcpy(d_norx, &norx, sizeof(Tpair), cudaMemcpyHostToDevice);
+
+	Tpair nory;
+	nory.fill(ybounds._min, ybounds._max);
+	Tpair* d_nory;//normalitation range
+	cudaMalloc((void**)&d_nory, sizeof(Tpair));
+	cudaMemcpy(d_nory, &nory, sizeof(Tpair), cudaMemcpyHostToDevice);
+
+	Tpair maxx;
+	maxx.fill(0, tamx);
+	Tpair* d_maxx;//normalitation range
+	cudaMalloc((void**)&d_maxx, sizeof(Tpair));
+	cudaMemcpy(d_maxx, &maxx, sizeof(Tpair), cudaMemcpyHostToDevice);
+
+	Tpair maxy;
+	maxy.fill(0, tamy);
+	Tpair* d_maxy;//normalitation range
+	cudaMalloc((void**)&d_maxy, sizeof(Tpair));
+	cudaMemcpy(d_maxy, &maxy, sizeof(Tpair), cudaMemcpyHostToDevice);
+
+
+	/*	dim3 threadspb(0, 1024, 0);
+	dim3 blockspf(0, 1024, 0);*/
+
+	renderPixel <<<1024, 1024>>> (d_norx, d_nory, d_maxx, d_maxy, it, d_img);
+
 	cudaMemcpy(img, d_img, bytes, cudaMemcpyDeviceToHost);
-	HBITMAP map = CreateBitmap(tamx, tamy, 1, 8 * 4, (void*)img->arr); // pointer to array
+	
+	HBITMAP map = CreateBitmap(tamx, tamy, 1, 8 * 4, (void*)img); // pointer to array
+	free(img);
+	cudaFree(d_img);
+	cudaFree(d_norx);
+	cudaFree(d_nory);
+	cudaFree(d_maxx);
+	cudaFree(d_maxy);
 	return map;
 }

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
-#include "Render.h"
+#include "Renderc.h"
 #include <chrono>
 using namespace std::chrono;
 

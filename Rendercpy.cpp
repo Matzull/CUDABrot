@@ -79,8 +79,8 @@ void renderThread(const Tpair& norx, const Tpair& nory, const Tpair& maxx, const
 		{
 			for (size_t i = 0; i < spp; i++)
 			{
-				coor.x = x;
-				coor.y = y;
+				coor.x = x + rand_num();
+				coor.y = y + rand_num();
 				coor.map(norx, nory, maxx, maxy);
 				pixel += converges(coor, it);
 			}
@@ -132,7 +132,7 @@ void saveimage(LPCSTR path, HBITMAP map)//only works with unidimensional color s
 
 //generates a random double in [0, 1)
 inline double rand_num() {//esto es relento
-	return 0;
+	return rand() / (RAND_MAX + 1.0);
 }
 
 void paint(HDC device, HBITMAP map)
