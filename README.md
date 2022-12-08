@@ -1,4 +1,5 @@
-Mandelbrot Fractal with gpu acceleration. 
+# Mandelbrot Fractal with gpu acceleration. 
+
 Requirements:
--Cuda toolkit
--Windows (winapi)
+- Cuda toolkit
+- Windows (winapi)
